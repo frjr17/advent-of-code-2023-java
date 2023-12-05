@@ -1,85 +1,50 @@
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class Two {
-    public static final int[][] DIRECTIONS = { { 0, 1 }, { 1, 0 }, { 0, -1 }, { -1, 0 }, { -1, 1 }, { -1, -1 },
-            { 1, -1 }, { 1, 1 } };
 
     public static int getResult(List<String> puzzle) {
         int result = 0;
+        Map<Integer, Integer> instances = new HashMap<>();
 
-        int puzzleLength = puzzle.size();
-        int lineLength = puzzle.get(0).length();
+        for (int lineIndex = 0; lineIndex < puzzle.size(); lineIndex++) {
+            instances.put(lineIndex + 1, 1);
+        }
 
-        Map<String, List<Integer>> gearRatioCandidates = new HashMap<>();
+        for (int lineIndex = 0; lineIndex < puzzle.size(); lineIndex++) {
+            int matchingNumbers = 0;
 
-        for (int lineIndex = 0; lineIndex < puzzleLength; lineIndex++) {
-            List<Character> digits = new ArrayList<>();
-            List<String> adjacent = new ArrayList<>();
+            Integer lineID = Integer.parseInt(Arrays.asList(puzzle.get(lineIndex).split(":")[0].split(" ")).getLast());
 
-            for (int charIndex = 0; charIndex < lineLength; charIndex++) {
-                char c = puzzle.get(lineIndex).charAt(charIndex);
+            List<String> winningNumbers = Arrays
+                    .asList(puzzle.get(lineIndex).split(":")[1].split("\\|")[0].trim().split(" ")).stream()
+                    .filter(num -> num != "").toList();
 
-                if (Character.isDigit(c)) {
-                    digits.add(c);
+            List<String> listNumbers = Arrays
+                    .asList(puzzle.get(lineIndex).split(":")[1].split("\\|")[1].trim().split(" ")).stream()
+                    .filter(num -> num != "").toList();
 
-                    if (!adjacent.isEmpty()) {
-                        continue;
-                    }
-
-                    for (int[] direction : DIRECTIONS) {
-                        int x = charIndex + direction[0];
-                        int y = lineIndex + direction[1];
-
-                        if (0 <= x && x < lineLength && 0 <= y && y < puzzleLength) {
-                            char adjacentChar = puzzle.get(y).charAt(x);
-
-                            if (adjacent.isEmpty() && adjacentChar == '*') {
-                                adjacent.add(x + "," + y);
-                                break;
-                            }
-                        }
-                    }
-                } else {
-                    if (!adjacent.isEmpty()) {
-                        int partNumber = numberFromDigits(digits);
-                        for (String xy : adjacent) {
-                            gearRatioCandidates
-                                    .computeIfAbsent(xy, k -> new ArrayList<>())
-                                    .add(partNumber);
-                        }
-                    }
-                    digits.clear();
-                    adjacent.clear();
+            for (String number : listNumbers) {
+                if (winningNumbers.contains(number)) {
+                    matchingNumbers++;
                 }
             }
 
-            if (!adjacent.isEmpty()) {
-                int partNumber = numberFromDigits(digits);
-                for (String xy : adjacent) {
-                    gearRatioCandidates
-                            .computeIfAbsent(xy, k -> new ArrayList<>())
-                            .add(partNumber);
+            int cardLength = instances.get(lineID);
+            if (matchingNumbers != 0) {
+                for (int i = 0; i < cardLength; i++) {
+                    for (int cardIndex = 1; cardIndex <= matchingNumbers; cardIndex++) {
+                        instances.put(lineID + cardIndex, instances.get(lineID + cardIndex) + 1);
+                    }
                 }
             }
         }
 
-        result = gearRatioCandidates.values()
-                .stream()
-                .filter(gears -> gears.size() == 2)
-                .mapToInt(gears -> gears.get(0) * gears.get(1))
-                .sum();
+        result = instances.values().stream().reduce(0, Integer::sum);
 
         return result;
     }
 
-    public static int numberFromDigits(List<Character> digits) {
-        StringBuilder builder = new StringBuilder(digits.size());
-        for (Character digit : digits) {
-            builder.append(digit);
-        }
-        return Integer.parseInt(builder.toString());
-    }
 }

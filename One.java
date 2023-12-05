@@ -1,64 +1,42 @@
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class One {
-    public static final int[][] DIRECTIONS = { { 0, 1 }, { 1, 0 }, { 0, -1 }, { -1, 0 }, { -1, 1 }, { -1, -1 },
-            { 1, -1 }, { 1, 1 } };
 
     public static int getResult(List<String> puzzle) {
         int result = 0;
-        int puzzleLength = puzzle.size();
-        int lineLength = puzzle.get(0).length();
 
-        for (int lineIndex = 0; lineIndex < puzzleLength; lineIndex++) {
-            List<Character> digits = new ArrayList<>();
-            boolean adjacent = false;
+        for (int lineIndex = 0; lineIndex < puzzle.size(); lineIndex++) {
+            int pow = 0;
 
-            for (int charIndex = 0; charIndex < lineLength; charIndex++) {
-                char c = puzzle.get(lineIndex).charAt(charIndex);
+            List<String> winningNumbers = Arrays
+                    .asList(puzzle.get(lineIndex).split(":")[1].split("\\|")[0].trim().split(" ")).stream()
+                    .filter(num -> num != "").toList();
 
-                if (Character.isDigit(c)) {
-                    digits.add(c);
+            List<String> listNumbers = Arrays
+                    .asList(puzzle.get(lineIndex).split(":")[1].split("\\|")[1].trim().split(" ")).stream()
+                    .filter(num -> num != "").toList();
 
-                    if (adjacent) {
-                        continue;
-                    }
-
-                    for (int[] direction : DIRECTIONS) {
-                        int x = charIndex + direction[0];
-                        int y = lineIndex + direction[1];
-
-                        if (0 <= x && x < lineLength && 0 <= y && y < puzzleLength) {
-                            char adjacentChar = puzzle.get(y).charAt(x);
-
-                            if (!adjacent && adjacentChar != '.' && !Character.isDigit(adjacentChar)) {
-                                adjacent = true;
-                                break;
-                            }
-                        }
-                    }
-                } else {
-                    if (adjacent) {
-                        result += numberFromDigits(digits);
-                    }
-                    digits.clear();
-                    adjacent = false;
+            for (String number : listNumbers) {
+                if (winningNumbers.contains(number)) {
+                    pow++;
                 }
             }
 
-            if (adjacent) {
-                result += numberFromDigits(digits);
+            int points = 0;
+
+            while (pow != 0) {
+                if (points == 0) {
+                    points++;
+                } else {
+                    points *= 2;
+                }
+                pow--;
             }
+            result += points;
         }
 
         return result;
     }
 
-    public static int numberFromDigits(List<Character> digits) {
-        StringBuilder builder = new StringBuilder(digits.size());
-        for (Character digit : digits) {
-            builder.append(digit);
-        }
-        return Integer.parseInt(builder.toString());
-    }
 }
