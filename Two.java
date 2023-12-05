@@ -1,57 +1,85 @@
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Two {
+    public static final int[][] DIRECTIONS = { { 0, 1 }, { 1, 0 }, { 0, -1 }, { -1, 0 }, { -1, 1 }, { -1, -1 },
+            { 1, -1 }, { 1, 1 } };
 
-    public static List<String> convertCubes(String cube) {
-        return Arrays.asList(cube.split(" ")).stream().filter(c -> c != "").toList();
-    }
-
-    public static int getResult(Collection<String> puzzle) {
+    public static int getResult(List<String> puzzle) {
         int result = 0;
 
-        for (String line : puzzle) {
-            String id = line.split(":")[0];
-            id = id.split(" ")[1];
-            String[] subsets = line.split(":")[1].split(";");
-            Collection<Integer> redList = new ArrayList<Integer>();
-            Collection<Integer> greenList = new ArrayList<Integer>();
-            Collection<Integer> blueList = new ArrayList<Integer>();
+        int puzzleLength = puzzle.size();
+        int lineLength = puzzle.get(0).length();
 
-            for (String subset : subsets) {
-                Collection<String> list = Arrays.asList(subset.split(","));
-                List<List<String>> cubes = list.stream().map(c -> One.convertCubes(c)).toList();
+        Map<String, List<Integer>> gearRatioCandidates = new HashMap<>();
 
-                for (List<String> cube : cubes) {
-                    Integer quantity = Integer.parseInt(cube.getFirst());
-                    String color = cube.getLast();
+        for (int lineIndex = 0; lineIndex < puzzleLength; lineIndex++) {
+            List<Character> digits = new ArrayList<>();
+            List<String> adjacent = new ArrayList<>();
 
-                    if (color.equals("red")) {
-                        redList.add(quantity);
+            for (int charIndex = 0; charIndex < lineLength; charIndex++) {
+                char c = puzzle.get(lineIndex).charAt(charIndex);
+
+                if (Character.isDigit(c)) {
+                    digits.add(c);
+
+                    if (!adjacent.isEmpty()) {
+                        continue;
                     }
 
-                    if (color.equals("green")) {
-                        blueList.add(quantity);
-                    }
+                    for (int[] direction : DIRECTIONS) {
+                        int x = charIndex + direction[0];
+                        int y = lineIndex + direction[1];
 
-                    if (color.equals("blue")) {
-                        greenList.add(quantity);
-                    }
+                        if (0 <= x && x < lineLength && 0 <= y && y < puzzleLength) {
+                            char adjacentChar = puzzle.get(y).charAt(x);
 
+                            if (adjacent.isEmpty() && adjacentChar == '*') {
+                                adjacent.add(x + "," + y);
+                                break;
+                            }
+                        }
+                    }
+                } else {
+                    if (!adjacent.isEmpty()) {
+                        int partNumber = numberFromDigits(digits);
+                        for (String xy : adjacent) {
+                            gearRatioCandidates
+                                    .computeIfAbsent(xy, k -> new ArrayList<>())
+                                    .add(partNumber);
+                        }
+                    }
+                    digits.clear();
+                    adjacent.clear();
                 }
             }
 
-            int redResult = Collections.max(redList);
-            int greenResult = Collections.max(greenList);
-            int blueResult = Collections.max(blueList);
-
-            result += (redResult * greenResult * blueResult);
-
+            if (!adjacent.isEmpty()) {
+                int partNumber = numberFromDigits(digits);
+                for (String xy : adjacent) {
+                    gearRatioCandidates
+                            .computeIfAbsent(xy, k -> new ArrayList<>())
+                            .add(partNumber);
+                }
+            }
         }
 
+        result = gearRatioCandidates.values()
+                .stream()
+                .filter(gears -> gears.size() == 2)
+                .mapToInt(gears -> gears.get(0) * gears.get(1))
+                .sum();
+
         return result;
+    }
+
+    public static int numberFromDigits(List<Character> digits) {
+        StringBuilder builder = new StringBuilder(digits.size());
+        for (Character digit : digits) {
+            builder.append(digit);
+        }
+        return Integer.parseInt(builder.toString());
     }
 }

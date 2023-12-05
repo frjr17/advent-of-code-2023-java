@@ -1,63 +1,64 @@
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-/**
- * One
- */
 public class One {
+    public static final int[][] DIRECTIONS = { { 0, 1 }, { 1, 0 }, { 0, -1 }, { -1, 0 }, { -1, 1 }, { -1, -1 },
+            { 1, -1 }, { 1, 1 } };
 
-    public static List<String> convertCubes(String cube) {
-
-        return Arrays.asList(cube.split(" ")).stream().filter(c -> c != "").toList();
-
-    }
-
-    public static int getResult(Collection<String> puzzle) {
+    public static int getResult(List<String> puzzle) {
         int result = 0;
-        for (String line : puzzle) {
-            boolean isValid = true;
-            String id = line.split(":")[0];
-            id = id.split(" ")[1];
-            String[] subsets = line.split(":")[1].split(";");
-            Map<String, Integer> lineColors = new HashMap<String, Integer>();
+        int puzzleLength = puzzle.size();
+        int lineLength = puzzle.get(0).length();
 
-            lineColors.put("red", 0);
-            lineColors.put("green", 0);
-            lineColors.put("blue", 0);
+        for (int lineIndex = 0; lineIndex < puzzleLength; lineIndex++) {
+            List<Character> digits = new ArrayList<>();
+            boolean adjacent = false;
 
-            for (String subset : subsets) {
-                Collection<String> list = Arrays.asList(subset.split(","));
-                List<List<String>> cubes = list.stream().map(c -> One.convertCubes(c)).toList();
+            for (int charIndex = 0; charIndex < lineLength; charIndex++) {
+                char c = puzzle.get(lineIndex).charAt(charIndex);
 
-                for (List<String> cube : cubes) {
-                    int quantity = Integer.parseInt(cube.getFirst());
-                    String color = cube.getLast();
+                if (Character.isDigit(c)) {
+                    digits.add(c);
 
-                    if (color.equals("green") && quantity > 13) {
-                        isValid = false;
-                        break;
-                    }
-                    if (color.equals("red") && quantity > 12) {
-                        isValid = false;
-                        break;
-                    }
-                    if (color.equals("blue") && quantity > 14) {
-                        isValid = false;
-                        break;
+                    if (adjacent) {
+                        continue;
                     }
 
-                    lineColors.put(color, lineColors.get(color) + quantity);
+                    for (int[] direction : DIRECTIONS) {
+                        int x = charIndex + direction[0];
+                        int y = lineIndex + direction[1];
+
+                        if (0 <= x && x < lineLength && 0 <= y && y < puzzleLength) {
+                            char adjacentChar = puzzle.get(y).charAt(x);
+
+                            if (!adjacent && adjacentChar != '.' && !Character.isDigit(adjacentChar)) {
+                                adjacent = true;
+                                break;
+                            }
+                        }
+                    }
+                } else {
+                    if (adjacent) {
+                        result += numberFromDigits(digits);
+                    }
+                    digits.clear();
+                    adjacent = false;
                 }
             }
 
-            if (isValid) {
-                result += Integer.parseInt(id);
+            if (adjacent) {
+                result += numberFromDigits(digits);
             }
         }
 
         return result;
+    }
+
+    public static int numberFromDigits(List<Character> digits) {
+        StringBuilder builder = new StringBuilder(digits.size());
+        for (Character digit : digits) {
+            builder.append(digit);
+        }
+        return Integer.parseInt(builder.toString());
     }
 }
