@@ -4,79 +4,28 @@ import java.util.List;
 
 public class One {
 
-    public static long getResult(List<String> puzzle) {
-        long result = 0;
+    public static int getResult(List<String> puzzle) {
+        int result = 1;
 
-        List<Long> seeds = Arrays.asList(puzzle.get(0).split(":")[1].trim().split(" ")).stream().filter(n -> n != " ")
-                .map(Long::parseLong).toList();
+        List<Integer> times = Arrays.asList(puzzle.get(0).split(":")[1].trim().split(" ")).stream().filter(n -> n != "")
+                .map(Integer::parseInt).toList();
+        List<Integer> distances = Arrays.asList(puzzle.get(1).split(":")[1].trim().split(" ")).stream()
+                .filter(n -> n != "")
+                .map(Integer::parseInt).toList();
 
-        List<String> converterStrings = puzzle.stream().filter(s -> s.contains("map:")).toList();
-
-        List<Long> current = seeds;
-
-        for (int converterStringIndex = 0; converterStringIndex < converterStrings.size() - 1; converterStringIndex++) {
-            List<List<String>> conversions = puzzle
-                    .subList(puzzle.indexOf(converterStrings.get(converterStringIndex)) + 1,
-                            puzzle.indexOf(converterStrings.get(converterStringIndex + 1)) - 1)
-                    .stream().map(n -> Arrays.asList(n.trim().split(" "))).toList();
-
-            List<Long> tempCurrent = new ArrayList<>();
-            for (Long seed : current) {
-                tempCurrent.add(seed);
-            }
-            // System.out.println("\n" + converterStrings.get(converterStringIndex));
-            // System.out.println("Before: " + current);
-            // System.out.println();
-            for (List<String> conversion : conversions) {
-                // System.out.println("Conversion: " + conversion);
-                Long destination = Long.parseLong(conversion.get(0));
-                Long source = Long.parseLong(conversion.get(1));
-                Long range = Long.parseLong(conversion.get(2));
-
-                for (int currentIndex = 0; currentIndex < current.size(); currentIndex++) {
-                    Long seed = current.get(currentIndex);
-                    if (seed >= source && seed < source + range) {
-                        tempCurrent.set(currentIndex, (destination - source) + seed);
-                    }
-                }
-                // System.out.println(tempCurrent);
-            }
-            // System.out.println();
-            current = tempCurrent;
-            // System.out.println("After: " + current);
-        }
-
-        List<List<String>> conversions = puzzle
-                .subList(puzzle.indexOf(converterStrings.getLast()) + 1,
-                        puzzle.size() - 1)
-                .stream().map(n -> Arrays.asList(n.trim().split(" "))).toList();
-
-        List<Long> tempCurrent = new ArrayList<>();
-        for (Long seed : current) {
-            tempCurrent.add(seed);
-        }
-        // System.out.println("\n" + converterStrings.getLast());
-        // System.out.println("Before: " + current);
-        // System.out.println();
-        for (List<String> conversion : conversions) {
-            // System.out.println("Conversion: " + conversion);
-            Long destination = Long.parseLong(conversion.get(0));
-            Long source = Long.parseLong(conversion.get(1));
-            Long range = Long.parseLong(conversion.get(2));
-
-            for (int currentIndex = 0; currentIndex < current.size(); currentIndex++) {
-                Long seed = current.get(currentIndex);
-                if (seed >= source && seed < source + range) {
-                    tempCurrent.set(currentIndex, (destination - source) + seed);
+        for (int timesIndex = 0; timesIndex < times.size(); timesIndex++) {
+            int distance = distances.get(timesIndex);
+            int time = times.get(timesIndex);
+            int winning = 0;
+            for (int timeIndex = 1; timeIndex < time; timeIndex++) {
+                // System.out.println(timeIndex + " " + (timeIndex * (time - timeIndex)));
+                if ((timeIndex * (time - timeIndex)) > distance) {
+                    winning++;
                 }
             }
-            // System.out.println(tempCurrent);
-        }
-        // System.out.println();
-        current = tempCurrent;
-        // System.out.println("After: " + current);
 
-        result = current.stream().min(Long::compareTo).orElse(0L);
+            result *= winning;
+        }
 
         return result;
     }
