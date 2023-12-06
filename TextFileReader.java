@@ -14,7 +14,7 @@ public class TextFileReader {
             String line;
             while ((line = reader.readLine()) != null) {
                 // Process each line as needed
-                puzzle.add(line);
+                puzzle.add(line.strip().trim());
             }
 
         } catch (IOException e) {
