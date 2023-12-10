@@ -1,105 +1,56 @@
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class Two {
-    private static List<String> strengthCardOrder = List.of("A", "K", "Q", "T", "9", "8", "7", "6", "5", "4", "3",
-            "2", "J").reversed();
 
-    public static int getMax(String card) {
-        List<String> letters = Arrays.asList(card.split(""));
-        Map<String, Integer> mappedLetters = new HashMap<>();
-        int jokers = 1;
-
-        for (String letter : letters) {
-            if (letter == "J") {
-                jokers++;
-            } else {
-                if (mappedLetters.containsKey(letter))
-                    mappedLetters.put(letter, mappedLetters.get(letter) + 1);
-                else
-                    mappedLetters.put(letter, 1);
-            }
-
+    private static long lcm(long x, long y) {
+        long max = Math.max(x, y);
+        long min = Math.min(x, y);
+        long lcm = max;
+        while (lcm % min != 0) {
+            lcm += max;
         }
-
-        int max = mappedLetters.values().iterator().next();
-
-        for (int value : mappedLetters.values()) {
-            if (value > max) {
-                max = value;
-            }
-        }
-        max += jokers;
-
-        if (max >= 4) {
-            max++;
-        } else if (max == 3) {
-            if (mappedLetters.values().contains(2)) {
-                max = 4;
-            } else {
-                max = 3;
-            }
-
-        } else if (max == 2) {
-            if (mappedLetters.values().stream().filter(n -> n == 2).count() == 2) {
-                max = 2;
-            } else {
-                max = 1;
-            }
-        } else {
-            max = 0;
-        }
-
-        // System.out.println(card + " " + mappedLetters + " " + max);
-        return max;
+        return lcm;
     }
 
     public static long getResult(List<String> puzzle) {
         long result = 0;
 
-        List<String> cards = puzzle.stream().map(card -> card.split(" ")[0].trim()).toList();
-        List<Integer> bids = puzzle.stream().map(card -> Integer.parseInt(card.split(" ")[1].trim())).toList();
+        List<String> directions = Arrays.asList((puzzle.get(0).split("")));
+        Map<String, List<String>> mappedDirections = new HashMap<>();
 
-        List<String> orderedCards = cards.stream()
-                .sorted(Comparator.comparing(Two::getMax).thenComparing(compareStrenghIndex())).toList();
-
-        int rank = 1;
-        for (String card : orderedCards) {
-            int index = cards.indexOf(card);
-            int bid = bids.get(index);
-            result += (rank * bid);
-            // System.out.println("Card: " + card + ", Bid: " + bid + ", Rank: " + rank +
-            // ",
-            // // Result:" + result);
-            rank++;
+        for (String direction : puzzle.subList(2, puzzle.size())) {
+            String key = direction.split(" = ")[0];
+            List<String> value = Arrays.asList(direction.split(" = ")[1].substring(1, 9).split(", "));
+            mappedDirections.put(key, value);
         }
 
-        return result; // 243101568
-    }
-
-    private static Comparator<? super String> compareStrenghIndex() {
-        return (card1, card2) -> {
-
-            int index = 0;
-            int indexA = strengthCardOrder.indexOf(String.valueOf(card1.charAt(index)));
-            int indexB = strengthCardOrder.indexOf(String.valueOf(card2.charAt(index)));
-
-            while (indexA == indexB) {
-                index++;
-                if (index >= card1.length() || index >= card2.length()) {
-                    break; // added check to prevent index out of bounds
+        List<String> currents = mappedDirections.keySet().stream().filter(s -> s.endsWith("A")).toList();
+        List<Long> currentsFinalCount = currents.stream().map(node -> {
+            long nodeResult = 0;
+            String nodeCurrent = node;
+            List<String> currentDirections = new ArrayList<>(directions);
+            while (!nodeCurrent.endsWith("Z")) {
+                if (currentDirections.isEmpty()) {
+                    currentDirections = new ArrayList<>(directions);
                 }
-                indexA = strengthCardOrder.indexOf(String.valueOf(card1.charAt(index)));
-                indexB = strengthCardOrder.indexOf(String.valueOf(card2.charAt(index)));
+                String currentDirection = currentDirections.removeFirst();
+                nodeCurrent = mappedDirections.get(nodeCurrent).get(currentDirection.equals("L") ? 0 : 1);
+                nodeResult++;
             }
-            // System.out.println(index);
-            // System.out.println(indexA + " " + indexB);
-            // System.out.println(card1 + " " + card2);
-            return indexA > indexB ? 1 : -1;
 
-        };
+            return nodeResult;
+        }).toList();
+
+        result = currentsFinalCount.get(0);
+        for (int i = 1; i < currentsFinalCount.size(); i++) {
+            result = lcm(result, currentsFinalCount.get(i));
+        }
+
+        return result;
     }
+
 }
