@@ -4,145 +4,88 @@ import java.util.List;
 
 public class One {
     static List<List<String>> puzzle;
+    static List<List<Integer>> galaxies = new ArrayList<>();
+    static int addingNum = 2;
 
     public static long getResult(List<String> mainPuzzle) {
         long result = 0;
 
-        puzzle = mainPuzzle.stream().map(node -> Arrays.asList(node.split(""))).toList();
-        List<Integer> startPositionCoord = getStartPositionCoord(puzzle);
-        int startY = startPositionCoord.get(0);
-        int startX = startPositionCoord.get(1);
-        List<Integer> solutions = new ArrayList<>();
-        solutions.add(getCounter(startY, startX + 1, "right"));
-        solutions.add(getCounter(startY - 1, startX, "up"));
-        solutions.add(getCounter(startY + 1, startX, "down"));
-        solutions.add(getCounter(startY - 1, startX, "left"));
+        List<List<String>> puzzle = mainPuzzle.stream().map(line -> Arrays.asList(line.split(""))).toList();
+        findGalaxies(puzzle);
+        List<Integer> rowsWithoutGalaxies = getRowsWithoutGalaxies(puzzle);
+        List<Integer> columnsWithoutGalaxies = getColumnsWithoutGalaxies(puzzle);
 
-        int max = solutions.stream().max(Integer::compareTo).orElse(0);
-        long maxCount = solutions.stream().filter(num -> num == max).count();
-        result = max / maxCount;
+        // System.out.println();
+        // for (Object line : puzzle) {
+        // System.out.println(line);
+        // }
+
+        for (int i = 0; i < galaxies.size(); i++) {
+            List<Integer> g1 = galaxies.get(i);
+
+            for (int j = i + 1; j < galaxies.size(); j++) {
+                int counterX = 0;
+                int counterY = 0;
+                List<Integer> g2 = galaxies.get(j);
+                int minY = Math.min(g1.get(0), g2.get(0));
+                int maxY = Math.max(g1.get(0), g2.get(0));
+                int minX = Math.min(g1.get(1), g2.get(1));
+                int maxX = Math.max(g1.get(1), g2.get(1));
+                for (int rowIdx : rowsWithoutGalaxies) {
+                    if (minY < rowIdx && rowIdx < maxY) {
+                        counterY++;
+                    }
+                }
+                for (int colIdx : columnsWithoutGalaxies) {
+                    if (minX < colIdx && colIdx < maxX) {
+                        counterX++;
+                    }
+                }
+                result += (Math.abs(minY - maxY) + ((addingNum - 1) * counterY) + Math.abs(minX - maxX)
+                        + (((addingNum - 1) * counterX)));
+            }
+        }
 
         return result;
     }
 
-    private static int getCounter(int startY, int startX, String direction) {
-        List<Object> resultPath = new ArrayList<>();
-        List<Integer> currentPosition = Arrays.asList(startY, startX);
-        int counter = 0;
-
-        do {
-            int currentPositionY = currentPosition.get(0);
-            int currentPositionX = currentPosition.get(1);
-            resultPath = getNextDirection(Arrays.asList(currentPositionY, currentPositionX), direction);
-            direction = (String) resultPath.get(1);
-            currentPosition = (List<Integer>) resultPath.get(0);
-            counter++;
-        } while (!direction.isEmpty() || !currentPosition.isEmpty());
-
-        return counter;
-    }
-
-    private static List<Object> getNextDirection(List<Integer> position, String direction) {
-        List<Integer> newPosition = new ArrayList<>();
-        String newDirection = "";
-        int y = position.get(0);
-        int x = position.get(1);
-        String coord;
-        try {
-            coord = puzzle.get(y).get(x);
-
-        } catch (Exception e) {
-            return Arrays.asList(newPosition, newDirection);
-        }
-
-        if (!coord.equals(".")) {
-            if (coord.equals("|")) {
-                if (direction.equals("up") && y != 0) {
-                    newPosition.add(y - 1);
-                    newPosition.add(x);
-                    newDirection = "up";
-                } else if (direction.equals("down") && y != puzzle.size()) {
-                    newPosition.add(y + 1);
-                    newPosition.add(x);
-                    newDirection = "down";
-                }
-
-            }
-            if (coord.equals("-")) {
-                if (direction.equals("left") && x != 0) {
-                    newPosition.add(y);
-                    newPosition.add(x - 1);
-                    newDirection = "left";
-                } else if (direction.equals("right") && x != puzzle.get(0).size()) {
-                    newPosition.add(y);
-                    newPosition.add(x + 1);
-                    newDirection = "right";
-                }
-
-            }
-            if (coord.equals("L")) {
-                if (direction.equals("left") && y != 0) {
-                    newPosition.add(y - 1);
-                    newPosition.add(x);
-                    newDirection = "up";
-                } else if (direction.equals("down") && x != puzzle.get(0).size() - 1) {
-                    newPosition.add(y);
-                    newPosition.add(x + 1);
-                    newDirection = "right";
-                }
-
-            }
-            if (coord.equals("J")) {
-                if (direction.equals("right") && y != 0) {
-                    newPosition.add(y - 1);
-                    newPosition.add(x);
-                    newDirection = "up";
-                } else if (direction.equals("down") && x != 0) {
-                    newPosition.add(y);
-                    newPosition.add(x - 1);
-                    newDirection = "left";
-                }
-
-            }
-            if (coord.equals("7")) {
-                if (direction.equals("right") && y != puzzle.size() - 1) {
-                    newPosition.add(y + 1);
-                    newPosition.add(x);
-                    newDirection = "down";
-                } else if (direction.equals("up") && x != 0) {
-                    newPosition.add(y);
-                    newPosition.add(x - 1);
-                    newDirection = "left";
-                }
-
-            }
-            if (coord.equals("F")) {
-                if (direction.equals("left") && y != puzzle.size() - 1) {
-                    newPosition.add(y + 1);
-                    newPosition.add(x);
-                    newDirection = "down";
-                } else if (direction.equals("up") && x != puzzle.get(0).size() - 1) {
-                    newPosition.add(y);
-                    newPosition.add(x + 1);
-                    newDirection = "right";
-                }
-
-            }
-        }
-
-        return Arrays.asList(newPosition, newDirection);
-    }
-
-    private static List<Integer> getStartPositionCoord(List<List<String>> puzzle) {
-        List<Integer> startPositionCoord = new ArrayList<>();
+    private static void findGalaxies(List<List<String>> puzzle) {
         for (int i = 0; i < puzzle.size(); i++) {
-            for (int j = 0; j < puzzle.get(0).size(); j++) {
-                if (puzzle.get(i).get(j).equals("S")) {
-                    startPositionCoord.add(i);
-                    startPositionCoord.add(j);
+            List<String> line = puzzle.get(i);
+            for (int j = 0; j < line.size(); j++) {
+                String point = line.get(j);
+                if (point.equals("#")) {
+                    galaxies.add(List.of(i, j));
                 }
             }
         }
-        return startPositionCoord;
     }
+
+    private static List<Integer> getColumnsWithoutGalaxies(List<List<String>> puzzle) {
+        List<Integer> columnsWithoutGalaxies = new ArrayList<>();
+        for (int i = 0; i < puzzle.size(); i++) {
+            boolean haveGalaxy = false;
+            for (int j = 0; j < puzzle.size(); j++) {
+                if (puzzle.get(j).get(i).equals("#")) {
+                    haveGalaxy = true;
+                    break;
+                }
+            }
+            if (!haveGalaxy) {
+                columnsWithoutGalaxies.add(i);
+            }
+        }
+        return columnsWithoutGalaxies;
+    }
+
+    private static List<Integer> getRowsWithoutGalaxies(List<List<String>> puzzle) {
+        List<Integer> rowsWithoutGalaxies = new ArrayList<>();
+        for (int i = 0; i < puzzle.size(); i++) {
+            if (!puzzle.get(i).contains("#")) {
+                rowsWithoutGalaxies.add(i);
+            }
+        }
+        return rowsWithoutGalaxies;
+    }
+
 }
